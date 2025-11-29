@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    env_file: .env
+    ports:
+      - "${MYSQL_PORT}:3306"  # map port MySQL ra localhost
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "${ORDER_SERVICE_PORT}:8081"  # map port Spring Boot ra localhost
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./order-service/src:/app/src
+      - ./order-service/pom.xml:/app/pom.xml
+      - maven-repo:/root/.m2/repository
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/orders?useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+    command: ["mvn", "spring-boot:run"]
+
+volumes:
+  mysql_data:
+  maven-repo:

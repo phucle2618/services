@@ -1,6 +1,6 @@
 user-service/
 order-service/
-
+product-service/
 .env
 
 .idea/
